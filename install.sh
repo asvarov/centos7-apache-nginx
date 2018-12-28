@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ETHNAME=$(ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{gsub(" ","",$0);print $2;getline}') # Or declare a variable name of ethernet interface manually
-IPADDRESS=192.168.10.51
+IPADDRESS=192.168.10.50
 DNSSERVER=192.168.10.3
 GTWSERVER=192.168.10.1
 MASKNET=255.255.255.0
@@ -10,13 +10,19 @@ SITE=b2b
 DOMAIN=test.lab
 MASTERHOST=b2b-01 #lsyncd
 SLAVEHOST=b2b-02  #lsyncd
+#MASTERHOST-1-IP=192.168.10.50 #mariadb replicate
+#MASTERHOST-2-IP=192.168.10.51  #mariadb replicate
+#MASTERHOST-ID=1 #mariadb replicate
+#REPLICATE-DB=testreplica #mariadb replicate
+#REPLICATOR-USERNAME=replicator
+#REPLICATOR-PASSWORD=p@SSW0RD
 INSTALL_DIR=/home
 HOSTNAME=$MASTERHOST.$DOMAIN
 WEBDOMAIN=$SITE.$DOMAIN
 ETC=$INSTALL_DIR/scripts/etc
 VAR=$INSTALL_DIR/scripts/var
 USR=$INSTALL_DIR/scripts/usr
-NGINX=nginx-1.13.9
+NGINX=nginx-1.13.9 # version maked nginx
 
 #Configure Network interface
 #------------------------------------------------------
@@ -88,6 +94,26 @@ systemctl enable mariadb
 systemctl start mariadb
 echo Set ROOT PASSWORD to mariadb
 mysqladmin -u root password
+#------------------------------------------------------
+
+#Configure MariaDB master-master replica
+#------------------------------------------------------
+#cp --backup=simple $ETC/my.cnf /etc/my.cnf
+#sed -i "s/MASTERHOST-1-IP/$MASTERHOST-1-IP/g" /etc/my.cnf
+#sed -i "s/MASTERHOST-ID/$MASTERHOST-ID/g" /etc/my.cnf
+#sed -i "s/REPLICATE-DB/$REPLICATE-DB/g" /etc/my.cnf
+#chown -R root:root /etc/named.conf
+#chmod -R 644 /etc/named.conf
+#systemctl restart mariadb
+#
+#mysql -uroot -p -e "CREATE USER '$REPLICATOR-USERNAME'@'%' IDENTIFIED BY '$REPLICATOR-PASSWORD'; 
+#		     GRANT REPLICATION SLAVE ON *.* TO '$REPLICATOR-USERNAME'@'%'; 
+#		     SHOW MASTER STATUS;
+#		     CREATE DATABASE REPLICATE-DB;
+#		     SLAVE STOP;
+#		     CHANGE MASTER TO MASTER_HOST = '$MASTERHOST-2-IP', MASTER_USER = '$REPLICATOR-USERNAME', MASTER_PASSWORD = 'REPLICATOR-PASSWORD', MASTER_LOG_FILE = '(result File of SHOW MASTER STATUS on other master server)', MASTER_LOG_POS = (result Position of SHOW MASTER STATUS on other master server); 
+#		     SLAVE START;"
+
 #------------------------------------------------------
 
 #Configure ProFTPd 
