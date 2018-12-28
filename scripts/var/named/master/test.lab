@@ -1,0 +1,28 @@
+$TTL 3600
+
+DOMAIN.     IN      SOA     ns1.DOMAIN. admin.DOMAIN. (
+        2017082401      ; Serial
+        10800           ; Refresh
+        3600            ; Retry
+        604800          ; Expire
+        604800          ; Negative Cache TTL
+)
+
+			IN      NS      ns1.DOMAIN.
+
+			IN      MX 10   mx.DOMAIN.
+
+@			IN	A       IPADDRESS
+localhost		IN	A       127.0.0.1
+ns1			IN	A       DNSSERVER
+mx			IN	A       IPADDRESS
+mail			IN	A       IPADDRESS
+MASTERHOST			IN	A       IPADDRESS
+SITE			IN	A       IPADDRESS
+phpmyadmin		IN	A	IPADDRESS
+
+DOMAIN.		IN	TXT	"v=spf1 ip4:IPADDRESS include:_spf.mailsystem.net ~all"
+_domainkey		IN	TXT	"o=~; r=postmaster@DOMAIN"
+_adsp._domainkey	IN	TXT	"dkim=all"
+
+www		IN      CNAME   SITE.DOMAIN.

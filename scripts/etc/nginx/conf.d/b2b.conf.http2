@@ -1,0 +1,15 @@
+server {
+    listen       80;
+    server_name  b2b.test.lab www.b2b.test.lab;
+    return 301 https://$host$request_uri;
+}
+    
+server {     
+	listen 443 ssl http2;
+        ssl on;
+	ssl_certificate /etc/nginx/ssl/cert.pem;
+        ssl_certificate_key /etc/nginx/ssl/cert.key;
+        location / {
+    	root /usr/share/nginx/html;
+        }
+}
