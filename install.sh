@@ -219,6 +219,9 @@ chmod -R 775 /var/www/$SITE
 
 #Configure SSHd
 #------------------------------------------------------
+cp --backup=simple $ETC/ssh/sshd_config.conf /etc/ssh/sshd_config.conf
+chown -R root:root /etc/ssh/sshd_config.conf
+chmod -R 644 /etc/ssh/sshd_config.conf
 #echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config
 #ssh-keygen -N "" -f /root/.ssh/id_rsa
 echo -e 'y\n' | ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
