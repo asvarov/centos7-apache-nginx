@@ -1,0 +1,28 @@
+#       keepalive: how many seconds between heartbeats
+#
+keepalive 2
+#
+#       deadtime: seconds-to-declare-host-dead
+#
+deadtime 10
+#
+#       What UDP port to use for udp or ppp-udp communication?
+#
+udpport        694
+bcast  ens18
+mcast ens18 225.0.0.1 694 1 0
+# On every server different IP
+#ucast ens18 VIRTUAL-IP-MASTERHOST
+#ucast ens18 VIRTUAL-IP-SLAVEHOST
+
+#       What interfaces to heartbeat over?
+udp     ens18
+#
+#       Facility to use for syslog()/logger (alternative to log/debugfile)
+#
+logfacility     local0
+#
+#       Tell what machines are in the cluster
+#       node    nodename ...    -- must match uname -n
+node    MASTERHOST.DOMAIN
+node    SLAVEHOST.DOMAIN

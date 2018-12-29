@@ -10,12 +10,16 @@ SITE=b2b
 DOMAIN=test.lab
 MASTERHOST=b2b-01 #lsyncd
 SLAVEHOST=b2b-02  #lsyncd
-#MASTERHOST-1-IP=192.168.10.50 #mariadb replicate
-#MASTERHOST-2-IP=192.168.10.51  #mariadb replicate
+#MASTERHOST-1-IP=192.168.10.50 #mariadb replicate, HAproxy
+#MASTERHOST-2-IP=192.168.10.51  #mariadb replicate HAproxy
 #MASTERHOST-ID=1 #mariadb replicate
 #REPLICATE-DB=testreplica #mariadb replicate
 #REPLICATOR-USERNAME=replicator
-#REPLICATOR-PASSWORD=p@SSW0RD
+#REPLICATOR-PASSWORD=P@ssw0rd
+#HEARTBEAT-PASSWORD=P@ssw0rd
+VIRTUAL-IP-HA=10.10.10.1
+VIRTUAL-IP-MASTERHOST=10.10.10.2
+VIRTUAL-IP-SLAVEHOST=10.10.10.3
 INSTALL_DIR=/home
 HOSTNAME=$MASTERHOST.$DOMAIN
 WEBDOMAIN=$SITE.$DOMAIN
@@ -61,7 +65,7 @@ chmod -R 644 /etc/yum.repos.d/nginx.repo
 #------------------------------------------------------
 
 yum update
-yum -y install epel-release lua lua-devel pkgconfig asciidoc rsync lsyncd mc net-tools bind which ntpdate nginx php php-fpm mariadb mariadb-server php-mysql php-mysqli phpmyadmin php-mbstring php-mcrypt php-gd memcached php-pecl-memcached php-xcache proftpd proftpd-utils httpd httpd-devel gcc wget unzip gcc pcre-devel zlib-devel openssl-devel libxml2-devel libxslt-devel gd-devel perl-ExtUtils-Embed GeoIP-devel gperftools-devel
+yum -y install epel-release lua lua-devel pkgconfig asciidoc rsync lsyncd mc net-tools bind which ntpdate nginx php php-fpm mariadb mariadb-server php-mysql php-mysqli phpmyadmin php-mbstring php-mcrypt php-gd memcached php-pecl-memcached php-xcache haproxy heartbeat proftpd proftpd-utils httpd httpd-devel gcc wget unzip gcc pcre-devel zlib-devel openssl-devel libxml2-devel libxslt-devel gd-devel perl-ExtUtils-Embed GeoIP-devel gperftools-devel
 sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 /usr/sbin/setenforce 0
 
@@ -107,13 +111,53 @@ mysqladmin -u root password
 #systemctl restart mariadb
 #
 #mysql -uroot -p -e "CREATE USER '$REPLICATOR-USERNAME'@'%' IDENTIFIED BY '$REPLICATOR-PASSWORD'; 
-#		     GRANT REPLICATION SLAVE ON *.* TO '$REPLICATOR-USERNAME'@'%'; 
+#		     GRANT REPLICATION SLAVE ON *.* TO '$REPLICATOR-USERNAME'@'%';
+#		     FLUSH PRIVILEGES;
 #		     SHOW MASTER STATUS;
 #		     CREATE DATABASE REPLICATE-DB;
 #		     SLAVE STOP;
 #		     CHANGE MASTER TO MASTER_HOST = '$MASTERHOST-2-IP', MASTER_USER = '$REPLICATOR-USERNAME', MASTER_PASSWORD = 'REPLICATOR-PASSWORD', MASTER_LOG_FILE = '(result File of SHOW MASTER STATUS on other master server)', MASTER_LOG_POS = (result Position of SHOW MASTER STATUS on other master server); 
 #		     SLAVE START;"
+#------------------------------------------------------
 
+
+#Configure Heartbeat
+#------------------------------------------------------
+#systemctl enable heartbeat
+#
+#cp --backup=simple $ETC/haproxy/ha.d/authkeys /etc/haproxy/ha.d/authkeys
+#sed -i  "s/HEARTBEAT-PASSWORD/$HEARTBEAT-PASSWORD/g" /etc/haproxy/ha.d/authkeys
+#chown -R root:root /etc/haproxy/ha.d/authkeys
+#chmod -R 600 /etc/haproxy/ha.d/authkeys
+#
+#cp --backup=simple $ETC/ha.d/ha.cf /etc/ha.d/ha.cf
+#sed -i "s/VIRTUAL-IP-MASTERHOST/$VIRTUAL-IP-MASTERHOST/g" /etc/ha.d/ha.cf
+#sed -i "s/VIRTUAL-IP-SLAVEHOST/$VIRTUAL-IP-SLAVEHOST/g" /etc/ha.d/ha.cf
+#sed -i "s/MASTERHOST/$MASTERHOST/g" /etc/ha.d/ha.cf
+#sed -i "s/SLAVEHOST/$SLAVEHOST/g" /etc/ha.d/ha.cf
+#sed -i "s/DOMAIN/$DOMAIN/g" /etc/ha.d/ha.cf
+#chown -R root:root /etc/ha.d/ha.cf
+#chmod -R 644 /etc/ha.d/ha.cf
+#systemctl start heartbeat
+#------------------------------------------------------
+
+#Configure HAProxy
+#------------------------------------------------------
+#cp --backup=simple $ETC/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
+#sed -i "s/VIRTUAL-IP-HA/$VIRTUAL-IP-HA/g" /etc/haproxy/haproxy.cfg
+#sed -i "s/MASTERHOST-1-IP/$MASTERHOST-1-IP/g" /etc/haproxy/haproxy.cfg
+#sed -i "s/MASTERHOST-2-IP/$MASTERHOST-2-IP/g" etc/haproxy/haproxy.cfg
+#chown -R root:root /etc/haproxy/haproxy.cfg
+#chmod -R 644 /etc/haproxy/haproxy.cfg
+#
+#mysql -uroot -p -e "CREATE USER 'haproxy_check'@'%';
+#		     FLUSH PRIVILEGES;
+#		     CREATE USER 'haproxy_root'@'%' IDENTIFIED BY '$HAPROXY-ROOT-PASSWORD';
+#		     GRANT ALL PRIVILEGIES ON *.* TO 'haproxy_root'@'%';
+#sysctl -w net.ipv4.ip_nonlocal_bind=1
+#sysctl -p
+#systemctl enable haproxy
+#systemctl start haproxy
 #------------------------------------------------------
 
 #Configure ProFTPd 
