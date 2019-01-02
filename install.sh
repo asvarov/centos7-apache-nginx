@@ -16,10 +16,9 @@ SLAVEHOST=b2b-02  #lsyncd
 #REPLICATE-DB=testreplica #mariadb replicate
 #REPLICATOR-USERNAME=replicator
 #REPLICATOR-PASSWORD=P@ssw0rd
-#HEARTBEAT-PASSWORD=P@ssw0rd
-VIRTUAL-IP-HA=10.10.10.1
-VIRTUAL-IP-MASTERHOST=10.10.10.2
-VIRTUAL-IP-SLAVEHOST=10.10.10.3
+#VIRTUAL-IP-HA=192.168.10.55
+#VIRTUAL-IP-MASTERHOST=$MASTERHOST-1-IP
+#VIRTUAL-IP-SLAVEHOST=$MASTERHOST-2-IP
 INSTALL_DIR=/home
 HOSTNAME=$MASTERHOST.$DOMAIN
 WEBDOMAIN=$SITE.$DOMAIN
@@ -27,6 +26,14 @@ ETC=$INSTALL_DIR/scripts/etc
 VAR=$INSTALL_DIR/scripts/var
 USR=$INSTALL_DIR/scripts/usr
 NGINX=nginx-1.13.9 # version maked nginx
+
+#Check root
+#------------------------------------------------------
+if [ $(id -u) != "0" ]; then
+    echo "You must be the superuser to run this script"
+    exit 1
+fi
+#------------------------------------------------------
 
 #Configure Network interface
 #------------------------------------------------------
@@ -60,12 +67,12 @@ chmod -R 644 /etc/hostname
 #Configure YUM
 #------------------------------------------------------
 cp --backup=simple $ETC/yum.repos.d/nginx.repo /etc/yum.repos.d/nginx.repo
-chown -R root:root /etc/yum.repos.d/nginx.repo
-chmod -R 644 /etc/yum.repos.d/nginx.repo
+chown -R root:root /etc/yum.repos.d/*
+chmod -R 644 /etc/yum.repos.d/*
 #------------------------------------------------------
 
 yum update
-yum -y install epel-release lua lua-devel pkgconfig asciidoc rsync lsyncd mc net-tools bind which ntpdate nginx php php-fpm mariadb mariadb-server php-mysql php-mysqli phpmyadmin php-mbstring php-mcrypt php-gd memcached php-pecl-memcached php-xcache haproxy heartbeat proftpd proftpd-utils httpd httpd-devel gcc wget unzip gcc pcre-devel zlib-devel openssl-devel libxml2-devel libxslt-devel gd-devel perl-ExtUtils-Embed GeoIP-devel gperftools-devel
+yum -y install epel-release lua lua-devel pkgconfig asciidoc rsync lsyncd mc net-tools bind which ntpdate nginx php php-fpm mariadb mariadb-server php-mysql php-mysqli phpmyadmin php-mbstring php-mcrypt php-gd memcached php-pecl-memcached php-xcache haproxy proftpd proftpd-utils httpd httpd-devel gcc wget unzip gcc pcre-devel zlib-devel openssl-devel libxml2-devel libxslt-devel gd-devel perl-ExtUtils-Embed GeoIP-devel gperftools-devel
 sed -i "s/SELINUX=enforcing/SELINUX=disabled/" /etc/selinux/config
 /usr/sbin/setenforce 0
 
@@ -80,7 +87,8 @@ chmod -R 600 /var/spool/cron/root
 #------------------------------------------------------
 systemctl enable firewalld
 systemctl start firewalld
-firewall-cmd --permanent --add-port=80/tcp --add-port=443/tcp --add-port=8080/tcp --add-port=20-21/tcp --add-port=40900-40999/tcp --add-port=25/tcp --add-port=465/tcp --add-port=587/tcp --add-port=53/tcp
+firewall-cmd --permanent --add-service=high-availability --add-port=80/tcp --add-port=443/tcp --add-port=8080/tcp --add-port=20-21/tcp --add-port=40900-40999/tcp --add-port=25/tcp --add-port=465/tcp --add-port=587/tcp --add-port=53/tcp --add-port=9999/tcp  --add-port=2224/tcp --add-port=3121/tcp --add-port=5403-5405/tcp --add-port=21064/tcp
+
 #------------------------------------------------------
 
 #Configure PHP
@@ -118,27 +126,6 @@ mysqladmin -u root password
 #		     SLAVE STOP;
 #		     CHANGE MASTER TO MASTER_HOST = '$MASTERHOST-2-IP', MASTER_USER = '$REPLICATOR-USERNAME', MASTER_PASSWORD = 'REPLICATOR-PASSWORD', MASTER_LOG_FILE = '(result File of SHOW MASTER STATUS on other master server)', MASTER_LOG_POS = (result Position of SHOW MASTER STATUS on other master server); 
 #		     SLAVE START;"
-#------------------------------------------------------
-
-
-#Configure Heartbeat
-#------------------------------------------------------
-#systemctl enable heartbeat
-#
-#cp --backup=simple $ETC/haproxy/ha.d/authkeys /etc/haproxy/ha.d/authkeys
-#sed -i  "s/HEARTBEAT-PASSWORD/$HEARTBEAT-PASSWORD/g" /etc/haproxy/ha.d/authkeys
-#chown -R root:root /etc/haproxy/ha.d/authkeys
-#chmod -R 600 /etc/haproxy/ha.d/authkeys
-#
-#cp --backup=simple $ETC/ha.d/ha.cf /etc/ha.d/ha.cf
-#sed -i "s/VIRTUAL-IP-MASTERHOST/$VIRTUAL-IP-MASTERHOST/g" /etc/ha.d/ha.cf
-#sed -i "s/VIRTUAL-IP-SLAVEHOST/$VIRTUAL-IP-SLAVEHOST/g" /etc/ha.d/ha.cf
-#sed -i "s/MASTERHOST/$MASTERHOST/g" /etc/ha.d/ha.cf
-#sed -i "s/SLAVEHOST/$SLAVEHOST/g" /etc/ha.d/ha.cf
-#sed -i "s/DOMAIN/$DOMAIN/g" /etc/ha.d/ha.cf
-#chown -R root:root /etc/ha.d/ha.cf
-#chmod -R 644 /etc/ha.d/ha.cf
-#systemctl start heartbeat
 #------------------------------------------------------
 
 #Configure HAProxy
