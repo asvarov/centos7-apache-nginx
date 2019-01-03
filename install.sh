@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#export PATH=$PATH:directory
+
 ETHNAME=$(ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{gsub(" ","",$0);print $2;getline}') # Or declare a variable name of ethernet interface manually
 IPADDRESS=192.168.10.50
 DNSSERVER=192.168.10.3
@@ -19,7 +21,7 @@ SLAVEHOST=b2b-02  #lsyncd
 #VIRTUAL-IP-HA=192.168.10.55
 #VIRTUAL-IP-MASTERHOST=$MASTERHOST-1-IP
 #VIRTUAL-IP-SLAVEHOST=$MASTERHOST-2-IP
-INSTALL_DIR=/home
+INSTALL_DIR=$(pwd)
 HOSTNAME=$MASTERHOST.$DOMAIN
 WEBDOMAIN=$SITE.$DOMAIN
 ETC=$INSTALL_DIR/scripts/etc
