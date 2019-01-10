@@ -1,0 +1,3 @@
+Text in file2
+On ENGLISH Hello World
+On RUSSIAN Privet ot ADV-IT

@@ -90,6 +90,7 @@ chmod -R 600 /var/spool/cron/root
 systemctl enable firewalld
 systemctl start firewalld
 firewall-cmd --permanent --add-service=high-availability --add-port=80/tcp --add-port=443/tcp --add-port=8080/tcp --add-port=20-21/tcp --add-port=40900-40999/tcp --add-port=25/tcp --add-port=465/tcp --add-port=587/tcp --add-port=53/tcp --add-port=9999/tcp  --add-port=2224/tcp --add-port=3121/tcp --add-port=5403-5405/tcp --add-port=21064/tcp
+# firewall-cmd --permanent --add-port=161/udp --add-port=162/udp && firewall-cmd --add-port=161/udp --add-port=162/udp ## snmpd for cacti
 
 #------------------------------------------------------
 
